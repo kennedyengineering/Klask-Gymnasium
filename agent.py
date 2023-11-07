@@ -18,7 +18,7 @@ class Agent:
         self.epsilon = 0
         self.gamma = 0.9
         self.memory = deque(maxlen=MAX_MEMORY)
-        self.model = Linear_QNet(11, 256, 3)
+        self.model = Linear_QNet(6, 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -80,7 +80,9 @@ def train():
     total_score = 0
     record = 0
     agent = Agent()
+
     game = KlaskSimulator()
+    game.reset()
 
     while True:
         # get old state
@@ -88,16 +90,17 @@ def train():
 
         # get move
         final_move = agent.get_action(state_old)
+        final_move_list = list(final_move['force'])
 
         # perform move and get new state
-        reward, done, score = game.play_step(final_move)
+        reward, done, score = game.step(final_move)
         state_new = agent.get_state(game)
 
         # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+        agent.train_short_memory(state_old, final_move_list, reward, state_new, done)
 
         # remember
-        agent.remember(state_old, final_move, reward, state_new, done)
+        agent.remember(state_old, final_move_list, reward, state_new, done)
 
         if done:
             # train long memory, plot result

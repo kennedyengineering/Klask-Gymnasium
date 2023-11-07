@@ -127,10 +127,6 @@ class KlaskSimulator():
         self.world.CreateFrictionJoint(bodyA=self.bodies["ground"], bodyB=self.bodies["biscuit2"], maxForce=self.bodies["biscuit2"].mass*KG_GRAVITY)
         self.world.CreateFrictionJoint(bodyA=self.bodies["ground"], bodyB=self.bodies["biscuit3"], maxForce=self.bodies["biscuit3"].mass*KG_GRAVITY)
 
-        print('fuuuuck')
-        print(self.bodies)
-        
-
         # Render frame
         self.__render_frame()
 
