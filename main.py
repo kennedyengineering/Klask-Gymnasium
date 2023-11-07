@@ -162,8 +162,8 @@ def is_body_in_goal(body):
 
     if dist(body.position, (KG_GOAL_OFFSET_X * LENGTH_SCALER, (KG_BOARD_HEIGHT / 2) * LENGTH_SCALER)) <= KG_GOAL_RADIUS * LENGTH_SCALER:
         return 1
-    if dist(body.position, ((KG_BOARD_WIDTH - KG_GOAL_OFFSET_X) * LENGTH_SCALER, (KG_BOARD_HEIGHT / 2) * LENGTH_SCALER)) <= KG_GOAL_RADIUS * LENGTH_SCALER:
-        return 2
+    # if dist(body.position, ((KG_BOARD_WIDTH - KG_GOAL_OFFSET_X) * LENGTH_SCALER, (KG_BOARD_HEIGHT / 2) * LENGTH_SCALER)) <= KG_GOAL_RADIUS * LENGTH_SCALER:
+    #     return 2
     
     return 0
 

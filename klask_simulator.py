@@ -1,10 +1,13 @@
 from klask_constants import *
 
 from Box2D.b2 import contactListener, world, edgeShape, pi
+from Box2D.b2 import (world as b2World)
 from dataclasses import dataclass
 from random import choice
 
 import pygame
+
+from main import *
 
 class KlaskSimulator():
     @dataclass
@@ -65,12 +68,18 @@ class KlaskSimulator():
         self.magnet_bodies = None
         self.render_bodies = None
 
+        # Create score for [puck 1, puck 2]
+        self.score = [0, 0]
+
     def reset(self, ball_start_position="random"):
         # Create world
-        self.world = world(contactListener=self.KlaskContactListener(), gravity=(0, 0), doSleep=True)
+        self.world = b2World(contactListener=self.KlaskContactListener(), gravity=(0, 0), doSleep=True)
 
         # Create static bodies
         self.bodies = {}
+
+        # Create score for [puck 1, puck 2]
+        self.score = [0, 0]
 
         self.bodies["wall_bottom"] = self.world.CreateStaticBody(position=(0, 0), shapes=edgeShape(vertices=[(0,0), (KG_BOARD_WIDTH * self.length_scaler, 0)]))
         self.bodies["wall_left"] = self.world.CreateStaticBody(position=(0, 0), shapes=edgeShape(vertices=[(0,0), (0, KG_BOARD_HEIGHT * self.length_scaler)]))
@@ -118,15 +127,25 @@ class KlaskSimulator():
         self.world.CreateFrictionJoint(bodyA=self.bodies["ground"], bodyB=self.bodies["biscuit2"], maxForce=self.bodies["biscuit2"].mass*KG_GRAVITY)
         self.world.CreateFrictionJoint(bodyA=self.bodies["ground"], bodyB=self.bodies["biscuit3"], maxForce=self.bodies["biscuit3"].mass*KG_GRAVITY)
 
+        print('fuuuuck')
+        print(self.bodies)
+        
+
         # Render frame
         self.__render_frame()
 
     def step(self, actions):
-        # Apply forces to puck1
-        pass
+        # Apply forces 
+        # Assume actions is a dictionary with a tuple (force_x, force_y) as the vector
+        puck1_action = actions.get('puck1')
+        if puck1_action:
+            force_vector = self.world.b2Vec2(puck1_action[0], puck1_action[1])
+            self.bodies["puck1"].ApplyForceToCenter(force_vector, True)
 
-        # Apply forces to puck2
-        pass
+        puck2_action = actions.get('puck2')
+        if puck2_action:
+            force_vector = self.world.b2Vec2(puck2_action[0], puck2_action[1])
+            self.bodies["puck2"].ApplyForceToCenter(force_vector, True)
 
         # Apply magnetic forces to biscuits
         for body_key in self.magnet_bodies:
@@ -158,8 +177,22 @@ class KlaskSimulator():
         # Render the resulting frame
         self.__render_frame()
 
-        # Update game states
-        pass
+        # Check game state (especially if it's over)
+        game_state = determine_game_state(self.bodies["puck1"], self.bodies["puck2"], self.bodies["ball"])
+        done = (game_state != 0)
+
+        # Get game states
+        p1_goal = is_body_in_goal(self.bodies["puck1"])
+        p2_goal = is_body_in_goal(self.bodies["puck2"])
+
+        # Update scores 
+        self.score[0] += p1_goal
+        self.score[1] += p2_goal
+
+        # TODO
+        # update what we return for reward (for now reward is just: did score?)
+        # for now focusing on one agent at at time: puck1 
+        return self.score[0], done, self.score[0]
 
     def __apply_magnet_force(self, puck_body, biscuit_body):
         # Get the distance vector between the two bodies
