@@ -95,7 +95,7 @@ def train():
         # perform move and get new state
         reward, done, score = game.step(final_move)
         state_new = agent.get_state(game)
-        
+
         # train short memory
         agent.train_short_memory(state_old, final_move_list, reward, state_new, done)
 

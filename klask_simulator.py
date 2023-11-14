@@ -153,22 +153,27 @@ class KlaskSimulator():
 
         # Handle puck to biscuit collisions
         while self.world.contactListener.collision_list:
-            # Retrieve fixtures
-            puck, biscuit = world.contactListener.collision_list.pop()
+            # despite the while condition, still somehow sometimes pops from empty list: 
+            try: 
+                # Retrieve fixtures
+                puck, biscuit = world.contactListener.collision_list.pop()
+                
+                # Compute new biscuit position
+                position = (biscuit.body.position - puck.body.position)
+                position.Normalize()
+                position = position * (puck.shape.radius + biscuit.shape.radius)
+
+                # Create new biscuit fixture
+                new_biscuit = puck.body.CreateCircleFixture(radius=biscuit.shape.radius, pos=position, userData=biscuit.userData)
+                new_biscuit.sensor = True
+
+                # Remove old biscuit body
+                self.magnet_bodies.remove(biscuit.body.userData.name)
+                self.render_bodies.remove(biscuit.body.userDate.name)
+                world.DestroyBody(biscuit.body)
+            except: 
+                pass 
             
-            # Compute new biscuit position
-            position = (biscuit.body.position - puck.body.position)
-            position.Normalize()
-            position = position * (puck.shape.radius + biscuit.shape.radius)
-
-            # Create new biscuit fixture
-            new_biscuit = puck.body.CreateCircleFixture(radius=biscuit.shape.radius, pos=position, userData=biscuit.userData)
-            new_biscuit.sensor = True
-
-            # Remove old biscuit body
-            self.magnet_bodies.remove(biscuit.body.userData.name)
-            self.render_bodies.remove(biscuit.body.userDate.name)
-            world.DestroyBody(biscuit.body)
 
         # Render the resulting frame
         self.__render_frame()
@@ -185,28 +190,57 @@ class KlaskSimulator():
         self.score[0] += p1_goal
         self.score[1] += p2_goal
 
-        reward = self.calculate_reward(self.bodies['puck1'], self.bodies['ball'])
+        reward = self.calculate_reward()
+
+        # for debugging 
+        if done: 
+            print('GGG')
+            print(done)
+            print(reward)
+            print(self.score[0])
+            print(self.score[1])
 
         # return reward, done, score 
         return reward, done, self.score[0]
     
     # TODO will need to refactor this 
-    def calculate_reward(self, puck, ball):
+    def calculate_reward(self):
+        puck = self.bodies['puck1']
+        ball = self.bodies['ball']
+        m1 = self.bodies['biscuit1']
+        m2 = self.bodies['biscuit2']
+        m3 = self.bodies['biscuit3']
+     
+        def dist_reward(invert, p1, p2):
+            # Calculate Euclidean distance
+            distance = math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+            # Avoid division by zero and provide a reasonable upper limit for the reward
+            if distance < 0.01:
+                return 1000  # Max reward for being very close
+
+            # Calculate reward - inverse of distance
+            if invert:
+                reward = 1 / distance
+            else: 
+                reward = distance 
+            return reward 
+        
         # Extract the positions of puck and ball
         puck_position = (puck.position.x, puck.position.y)
         ball_position = (ball.position.x, ball.position.y)
+        reward_ball = dist_reward(True, puck_position, ball_position)
 
-        # Calculate Euclidean distance between puck and ball
-        distance = math.sqrt((puck_position[0] - ball_position[0])**2 + (puck_position[1] - ball_position[1])**2)
+        # Do the same for the puck and the magnets 
+        m1_position = (m1.position.x, m1.position.y)
+        m2_position = (m2.position.x, m2.position.y)
+        m3_position = (m3.position.x, m3.position.y)
+        reward_m1 = dist_reward(False, puck_position, m1_position)
+        reward_m2 = dist_reward(False, puck_position, m2_position)
+        reward_m3 = dist_reward(False, puck_position, m3_position)
 
-        # Avoid division by zero and provide a reasonable upper limit for the reward
-        if distance < 0.01:
-            return 1000  # Max reward for being very close
-
-        # Calculate reward - inverse of distance
-        reward = 1 / distance
-        return reward
-
+        return reward_ball + reward_m1 + reward_m2 + reward_m3
+    
     def __apply_magnet_force(self, puck_body, biscuit_body):
         # Get the distance vector between the two bodies
         force = (puck_body.position - biscuit_body.position)
