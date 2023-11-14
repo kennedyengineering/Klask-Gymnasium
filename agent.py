@@ -79,8 +79,8 @@ def train():
     plot_mean_scores = []
     total_score = 0
     record = 0
-    agent = Agent()
 
+    agent = Agent()
     game = KlaskSimulator()
     game.reset()
 
@@ -95,7 +95,7 @@ def train():
         # perform move and get new state
         reward, done, score = game.step(final_move)
         state_new = agent.get_state(game)
-
+        
         # train short memory
         agent.train_short_memory(state_old, final_move_list, reward, state_new, done)
 
@@ -119,7 +119,6 @@ def train():
             mean_score = total_score / agent.n_games
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
-
 
 if __name__ == '__main__':
     train()

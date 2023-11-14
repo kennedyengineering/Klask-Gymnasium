@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from random import choice
 
 import pygame
+import math
 
 from main import *
 
@@ -131,17 +132,16 @@ class KlaskSimulator():
         self.__render_frame()
 
     def step(self, actions):
-        # Apply forces 
-        # Assume actions is a dictionary with a tuple (force_x, force_y) as the vector
-        puck1_action = actions.get('puck1')
-        if puck1_action:
-            force_vector = self.world.b2Vec2(puck1_action[0], puck1_action[1])
-            self.bodies["puck1"].ApplyForceToCenter(force_vector, True)
+        puck1_action = actions.get('force')
 
-        puck2_action = actions.get('puck2')
-        if puck2_action:
-            force_vector = self.world.b2Vec2(puck2_action[0], puck2_action[1])
-            self.bodies["puck2"].ApplyForceToCenter(force_vector, True)
+        if puck1_action:
+            self.bodies["puck1"].ApplyForceToCenter(puck1_action, True)
+
+        # puck2_action = actions.get('puck2')
+        # if puck2_action:
+        #     print('STEP: got here 2')
+        #     force_vector = self.world.b2Vec2(puck2_action[0], puck2_action[1])
+        #     self.bodies["puck2"].ApplyForceToCenter(force_vector, True)
 
         # Apply magnetic forces to biscuits
         for body_key in self.magnet_bodies:
@@ -185,10 +185,27 @@ class KlaskSimulator():
         self.score[0] += p1_goal
         self.score[1] += p2_goal
 
-        # TODO
-        # update what we return for reward (for now reward is just: did score?)
-        # for now focusing on one agent at at time: puck1 
-        return self.score[0], done, self.score[0]
+        reward = self.calculate_reward(self.bodies['puck1'], self.bodies['ball'])
+
+        # return reward, done, score 
+        return reward, done, self.score[0]
+    
+    # TODO will need to refactor this 
+    def calculate_reward(self, puck, ball):
+        # Extract the positions of puck and ball
+        puck_position = (puck.position.x, puck.position.y)
+        ball_position = (ball.position.x, ball.position.y)
+
+        # Calculate Euclidean distance between puck and ball
+        distance = math.sqrt((puck_position[0] - ball_position[0])**2 + (puck_position[1] - ball_position[1])**2)
+
+        # Avoid division by zero and provide a reasonable upper limit for the reward
+        if distance < 0.01:
+            return 1000  # Max reward for being very close
+
+        # Calculate reward - inverse of distance
+        reward = 1 / distance
+        return reward
 
     def __apply_magnet_force(self, puck_body, biscuit_body):
         # Get the distance vector between the two bodies
