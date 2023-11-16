@@ -1,11 +1,12 @@
 from enum import unique, Enum
-from klask_constants import *
+from .klask_constants import *
 
 from Box2D.b2 import contactListener, world, edgeShape, pi
 from dataclasses import dataclass
 from random import choice
 from math import dist
 from PIL import Image
+from os import path
 
 import pygame
 
@@ -386,7 +387,7 @@ class KlaskSimulator():
         pygame.draw.circle(surface, KG_BISCUIT_START_COLOR, ((KG_BOARD_WIDTH / 2) * self.pixels_per_meter * self.length_scaler, ((KG_BOARD_HEIGHT / 2) + KG_BISCUIT_START_OFFSET_Y) * self.pixels_per_meter * self.length_scaler), KG_BISCUIT_START_RADIUS * self.pixels_per_meter * self.length_scaler, int(KG_BISCUIT_START_THICKNESS * self.pixels_per_meter * self.length_scaler))
 
         # Render Game Board Logo
-        pil_image = Image.open(KG_BOARD_LOGO_PATH)
+        pil_image = Image.open(path.join(path.dirname(__file__), KG_BOARD_LOGO_PATH))
         logo = pygame.image.fromstring(pil_image.tobytes("raw", "RGBA"), pil_image.size, "RGBA")
         logo = pygame.transform.scale(logo, (KG_BOARD_LOGO_WIDTH * self.pixels_per_meter * self.length_scaler, KG_BOARD_LOGO_HEIGHT * self.pixels_per_meter * self.length_scaler))
 
