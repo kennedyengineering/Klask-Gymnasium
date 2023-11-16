@@ -355,8 +355,8 @@ class KlaskSimulator():
             # Manage frame rate
             self.clock.tick(self.target_fps)
 
-        # Return rendered frame
-        return surface
+        # Return rendered frame as numpy array (RGB order)
+        return pygame.surfarray.array3d(surface).swapaxes(0,1)
 
     def __render_circle_fixture(self, circle, surface):
         # Render a circle fixture onto a surface

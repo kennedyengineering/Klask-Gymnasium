@@ -12,4 +12,4 @@ The Klask Adversary AI project aims to develop an agent skilled enough to beat h
 ## Demo Application
 This application demonstrates basic interaction with the simulation.
 
-`python3 main_user.py`
+`python3 main.py`
