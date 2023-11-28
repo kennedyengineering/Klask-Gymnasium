@@ -49,8 +49,10 @@ class KlaskSimulator():
                 # Disable contact
                 contact.enabled = False
 
-                # Mark biscuit for deletion
-                self.collision_list.append((puck, biscuit))
+                # Check if biscuit is already marked for deletion
+                if not any([x[1].userData.name == biscuit.userData.name for x in self.collision_list]):
+                    # Mark biscuit for deletion
+                    self.collision_list.append((puck, biscuit))
 
     def __init__(self, render_mode="human", length_scaler=100, pixels_per_meter=20, target_fps=120):
         # Store user parameters
