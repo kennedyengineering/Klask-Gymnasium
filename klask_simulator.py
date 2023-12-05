@@ -19,8 +19,14 @@ class KlaskSimulator():
     @unique
     class GameStates(Enum):
         PLAYING = 0
-        P1_WIN = 1
-        P2_WIN = 2
+        P1_WIN = 1              # WIN = P2_KLASK | P2_TWO_BISCUITS | P1_SCORE
+        P1_KLASK = 2            # P1 is inside its own goal
+        P1_SCORE = 3            # P1 put the ball in P2's goal
+        P1_TWO_BISCUITS = 4     # P1 has 2 or more biscuits attached to it
+        P2_WIN = 5              # WIN = P1_KLASK | P1_TWO_BISCUITS | P2_SCORE
+        P2_KLASK = 6            # P2 is inside its own goal
+        P2_SCORE = 7            # P2 put the ball in P1's goal
+        P2_TWO_BISCUITS = 8     # P2 has 2 or more biscuits attached to it
 
     class KlaskContactListener(contactListener):
         def __init__(self):
@@ -273,12 +279,36 @@ class KlaskSimulator():
         # Determines the state of the game
         states = []
 
+        # Determine puck 1 klask condition
+        if self.__is_in_goal(self.bodies["puck1"])[0]:
+            states.append(self.GameStates.P1_KLASK)
+
+        # Determine puck 1 score condition
+        if self.__is_in_goal(self.bodies["ball"])[1]:
+            states.append(self.GameStates.P1_SCORE)
+
+        # Determine puck 1 biscuit condition
+        if self.__num_biscuits_on_puck(self.bodies["puck1"]) >= 2:
+            states.append(self.GameStates.P1_TWO_BISCUITS)
+        
+        # Determine puck 2 klask condition
+        if self.__is_in_goal(self.bodies["puck2"])[1]:
+            states.append(self.GameStates.P2_KLASK)
+
+        # Determine puck 2 score condition
+        if self.__is_in_goal(self.bodies["ball"])[0]:
+            states.append(self.GameStates.P2_SCORE)
+
+        # Determine puck 2 biscuit condition
+        if self.__num_biscuits_on_puck(self.bodies["puck2"]) >= 2:
+            states.append(self.GameStates.P2_TWO_BISCUITS)
+
         # Determine puck 1 win conditions
-        if self.__is_in_goal(self.bodies["puck2"])[1] or self.__is_in_goal(self.bodies["ball"])[1] or self.__num_biscuits_on_puck(self.bodies["puck2"]) >= 2:
+        if self.GameStates.P2_KLASK in states or self.GameStates.P2_TWO_BISCUITS in states or self.GameStates.P1_SCORE in states:
             states.append(self.GameStates.P1_WIN)
         
         # Determine puck 2 win conditions
-        if self.__is_in_goal(self.bodies["puck1"])[0] or self.__is_in_goal(self.bodies["ball"])[0] or self.__num_biscuits_on_puck(self.bodies["puck1"]) >= 2:
+        if self.GameStates.P1_KLASK in states or self.GameStates.P1_TWO_BISCUITS in states or self.GameStates.P2_SCORE in states:
             states.append(self.GameStates.P2_WIN)
 
         # Determine if win condition was met
